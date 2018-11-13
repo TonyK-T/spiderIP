@@ -10,7 +10,7 @@ xici_spider = 'xici'
 class XiciSpider(scrapy.Spider):
     name = xici_spider
     allowed_domains = ['xicidaili.com']
-    page_num = 30                            # 页数, 越往后 ip西刺[验证时间]越老
+    page_num = 45                            # 页数, 越往后 ip西刺[验证时间]越老
 
     def start_requests(self):
         urls = ['http://www.xicidaili.com/wt/','http://www.xicidaili.com/wn/']    # http,https  # 'http://www.xicidaili.com/wn/'
@@ -40,10 +40,4 @@ class XiciSpider(scrapy.Spider):
             item['prove_time'] = tr_list[i].xpath('td[10]/text()').extract_first()
             yield item
 
-#
-# if __name__ == '__main__':
-#
-#     process = CrawlerProcess({'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'})
-#     process = CrawlerProcess(get_project_settings())
-#     process.crawl(XiciSpider)
-#     process.start()
+

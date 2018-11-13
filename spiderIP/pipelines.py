@@ -49,12 +49,13 @@ class BaseSpiderPipeline(object):
         IPCheck().run_ip_check(self.loop, self.queue, self.new_queue)
 
         while not self.new_queue.empty():
-            item = self.new_queue.get(timeout=3.5)
+            item = self.new_queue.get(timeout=5)
             _item = IPModel.db_distinct(self.session, IPModel, item, item['ip'])
             IPModel.save_mode(self.session, IPModel(), _item)
 
-        self.session.close()
 
+        self.session.close()
+        # self.loop.close() # loop无需手动关闭,见源码: finally: _run_until_complete_cb
 
 
 

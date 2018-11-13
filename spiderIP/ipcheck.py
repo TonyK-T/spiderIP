@@ -26,7 +26,7 @@ import requests
 class IPCheck:
     '''
     爬取时校验ip
-    aiohttp 校验http(不支持https代理,当然都可以用 grequests 校验(http&&https),如果你不闲着蛋疼的话);
+    aiohttp 校验http(不支持https,当然都可以用 grequests 校验(http&&https),如果你不闲着蛋疼的话);
     grequests 校验https;
     queue 获取item, 两个线程同时执行异步并发校验, item写入new_queue;
     '''
@@ -49,6 +49,7 @@ class IPCheck:
             ip = item['ip']
             proxy = {protocol: ip}  # {'http': '101.236.36.31:8866'}
 
+            # task任务
             if 'http' in proxy.keys():
                 # 模式1: 最快,但是会超过最大并发数
                 # task = asyncio.ensure_future(self.aiohttp_check(proxy))
@@ -56,7 +57,7 @@ class IPCheck:
                 # 模式2: 解决最大并发数问题，限制并发
                 task = asyncio.ensure_future(self.aiohttp_check2(proxy, semaphore))
 
-
+                # 任务数组
                 task.add_done_callback(functools.partial(self.aiohttp_callback, new_queue=new_queue, item=item))
                 aiohttp_tasks.append(task)
 
@@ -92,7 +93,7 @@ class IPCheck:
 
     async def aiohttp_check2(self, proxy, semaphore):
         '''
-         解决: 超过最大连接数报 too many file descriptors in select(), 通过asyncio.Semaphore(100) 限制并发数
+         解决: 超过最大连接数报 too many file descriptors in select()
         :param proxy: 
         :param semaphore: 
         :return: 
@@ -179,7 +180,7 @@ class IPCheck:
 
 class IPcheckRedis(IPCheck):
     '''
-    另一种实现校验通过redis  失败 ：, 在 redis sadd()操作时候 报  greenlet.error: cannot switch to a different thread, 两个线程同时添加redis() sadd()导致,maybe
+    另一种实现校验 失败 ：通过redis, 在 redis sadd()操作时候 报  greenlet.error: cannot switch to a different thread, 两个线程同时添加redis导致，maybe
     '''
 
     def check_ip(self, redis,redis_key,redis_key2):
@@ -192,9 +193,9 @@ class IPcheckRedis(IPCheck):
             _item = eval(item.decode('utf-8'))
             protocol = _item['protocol']
             ip = _item['ip']
-            proxy = {protocol: ip}
+            proxy = {protocol: ip}  # {'http': '101.236.36.31:8866'}
 
-
+            # task任务
             if 'http' in proxy.keys():
                 # 模式1: 最快,但是会超过最大并发数
                 # task = asyncio.ensure_future(self.aiohttp_check(proxy))
@@ -230,7 +231,6 @@ class IPcheckRedis(IPCheck):
         status = future.result()
         if status == 200:
             print('******************************可用的ip:', item)
-
             redis.sadd(redis_key,item)
             # redis.lpush(redis_key,item)
 

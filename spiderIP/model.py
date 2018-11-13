@@ -21,9 +21,9 @@ Base = declarative_base()
 db_name = 'spider'
 
 HOST = 'localhost'
-
+PASSWORD ='2456056533'
 engine = create_engine(
-    'mysql+pymysql://root:2456056533@{host}:3306/{db_name}?charset=utf8'.format(host=HOST, db_name=db_name), echo=False)
+    'mysql+pymysql://root:{password}@{host}:3306/{db_name}?charset=utf8'.format(password=PASSWORD,host=HOST, db_name=db_name), echo=False)
 
 table_ips = 'ips'
 
@@ -58,7 +58,7 @@ class BaseModel(Base):
                 raise e
 
         for k, v in attrs_datas.items():
-            if hasattr(obj, k) and k != 'id':  # 非id属性，id需要被用于db 的 主键
+            if hasattr(obj, k) and k != 'id':
                 setattr(obj, k, str(v))
 
     @classmethod
@@ -77,9 +77,7 @@ class BaseModel(Base):
             except Exception as e:
                 session.rollback()
 
-                # 因爬虫 process_item() 会递归调用,不适合用with,所以写两个方法commit
-                # with auto_commit(session):
-                #     session.add(model)
+
 
     @staticmethod
     @contextmanager
@@ -93,16 +91,13 @@ class BaseModel(Base):
     @staticmethod
     def db_distinct(session, dbmodel, item, keywords):
         '''
-        Db 通过url去重
+        Db 通过url去重,可选
         '''
-
-        # sql = 'SELECT url from {db_name}.{table_name} WHERE url ="{keyword}" limit 1'.format(db_name=db_name,table_name=table_name,keyword=keyword)
-        # result = session.execute(sql).fetchall()
 
         result = session.query(dbmodel).filter_by(url=keywords).first()
         if result:
-            raise DropItem('丢弃DB已存在的item:\n')  # DropItem 丢弃
-            # pass     # 在close_spider()方法里面调用 DropItem 会报一个异常： ERROR: Scraper close failure,  所以直接pass也行
+            raise DropItem('丢弃DB已存在的item:\n')
+            # pass
         else:
             return item
 
@@ -124,11 +119,11 @@ class IPModel(BaseModel):
     @staticmethod
     def db_distinct(session, dbmodel, item, keywords):
         '''
-        重写 Db通过 ip 去重,可选
+        重写 Db通过ip去重，可选
         '''
 
         result = session.query(dbmodel).filter_by(ip=keywords).first()
         if result:
-            pass
+            pass     # 在close_spider()方法里面调用 DropItem 会报一个异常
         else:
             return item

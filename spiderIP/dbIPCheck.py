@@ -78,7 +78,7 @@ class DbIPCheck:
 
     def grequests_callback(self, resp, proxies, useful, *args, **kwargs):
         '''
-        请求成功的回调函数
+        请求成功的回调函数,
         :param resp: 
         :param proxies: 
         :param useful: 
@@ -88,7 +88,7 @@ class DbIPCheck:
         '''
         if resp.status_code == 200:
             print('grequests_callback:有用IP--', proxies)
-            useful.append(proxies)  # OrderedDict([('http', '94.16.122.115:3128')])  有序字典
+            useful.append(proxies)  # OrderedDict([('http', '94.16.122.115:3128')])
 
     def del_ip(self):
         useful_ip, useless_ip = self.check_ip()

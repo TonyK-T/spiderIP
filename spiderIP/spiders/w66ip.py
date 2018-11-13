@@ -24,7 +24,7 @@ class W66Spider(scrapy.Spider):
 
     def start_requests(self):
 
-        urls =['http://www.66ip.cn/mo.php?sxb=&tqsl={}&port=&export=&ktip=&sxa=&submit=%CC%E1++%C8%A1&textarea='.format(self.num)]
+        urls =['http://www.66ip.cn/mo.php?sxb=&tqsl={}&port=&export=&ktip=&sxa=&submit=%CC%E1++%C8%A1&textarea='.format(self.num)]   # 免费http
         for url in urls:
             yield scrapy.Request(url,meta={'cate':'w66'},callback=self.parse)
 
@@ -45,9 +45,3 @@ class W66Spider(scrapy.Spider):
             item['prove_time'] = ''
             yield item
 
-# if __name__ == '__main__':
-#
-#     process = CrawlerProcess({'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'})
-#     # process = CrawlerProcess(get_project_settings())
-#     process.crawl(W66Spider)
-#     process.start()
