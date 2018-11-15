@@ -39,6 +39,9 @@ class BaseSpiderPipeline(object):
         elif spider.name == 'w66':
             # 无筛选
             self.queue.put(item)
+        elif spider.name =='w89':
+            # 无筛选
+            self.queue.put(item)
 
         return item
 

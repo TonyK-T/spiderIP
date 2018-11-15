@@ -23,18 +23,17 @@ import grequests
 
 import functools
 import requests
+import random
 
 from spiderIP.model import engine, get_sqlsession, IPModel
-
+from spiderIP.ipcheck import http_url,https_url
 
 class DbIPCheck:
     '''
     校验数据库ip是否可用
     '''
-    db_session = get_sqlsession(engine)
 
-    def __del__(self):
-        self.db_session.close()
+    db_session = get_sqlsession(engine)
 
     def get_ip(self):
 
@@ -44,20 +43,17 @@ class DbIPCheck:
     def check_ip(self):
         grequests_tasks = []
         useful = []
-        useless = []  # 无用的ip
-        all_proxies = [x for x in self.get_ip()]  # [('http', '202.101.13.68:80'), ]
-        for pro in all_proxies:
-            proxy = {pro[0]: pro[1]}
-            if pro[0] == 'http':
-                url = 'http://ip.chinaz.com/getip.aspx'
-            else:
-                url = 'https://www.baidu.com/'
+        useless = []  # 无用proxies
+        all_proxies = [x for x in self.get_ip()]  # [('http', 'http://202.101.13.68:80'), ]
 
-            grequests_tasks.append(grequests.get(url, proxies=proxy,
-                                                 callback=functools.partial(self.grequests_callback, proxies=proxy,
-                                                                            useful=useful),
-                                                 timeout=1.5))  # proxies = {'http': '101.236.36.31:8866'}
-            # grequests_tasks.append(grequests.get(url, proxies=pro, timeout=2))
+        for pro in all_proxies:
+            proxy = {pro[0]:pro[1]}
+            if 'http' in proxy.keys():
+                url = random.choice(http_url)
+            else:
+                url = random.choice(https_url)
+
+            grequests_tasks.append(grequests.get(url, proxies=proxy,callback=functools.partial(self.grequests_callback, proxies=proxy, useful=useful), timeout=1.5))
 
         resp = grequests.map(grequests_tasks, exception_handler=functools.partial(self.exception_handler,
                                                                                   useless=useless))
@@ -72,9 +68,9 @@ class DbIPCheck:
         :param useless: 
         :return: 
         '''
-        ip = request.__dict__['kwargs']['proxies']
-        print('exception_handler:无用ip--', ip)
-        useless.append(ip)  # {'http': '180.150.191.251:8889'}
+        proxies = request.__dict__['kwargs']['proxies']
+        print('exception_handler:无用ip--', proxies)
+        useless.append(proxies)  # {'http': 'http://180.150.191.251:8889'}
 
     def grequests_callback(self, resp, proxies, useful, *args, **kwargs):
         '''
@@ -88,30 +84,34 @@ class DbIPCheck:
         '''
         if resp.status_code == 200:
             print('grequests_callback:有用IP--', proxies)
-            useful.append(proxies)  # OrderedDict([('http', '94.16.122.115:3128')])
+            useful.append(proxies)  # OrderedDict([('http', 'http://94.16.122.115:3128')])
 
     def del_ip(self):
-        useful_ip, useless_ip = self.check_ip()
-
+        useful_proxies, useless_proxies = self.check_ip()
         with IPModel.auto_commit(self.db_session):
-            for i in useless_ip:  # i == {'http': '61.138.33.20:808'} | https
+            for i in useless_proxies:  # i == {'http': 'http://61.138.33.20:808'} | https
                 print('无用ip删除:', i)
                 _ip = [x for x in i.values()]
                 ip_model = self.db_session.query(IPModel).filter_by(ip=_ip[0]).all()
                 [self.db_session.delete(ip) for ip in ip_model]
 
-        print('有用的ip数：', len(useful_ip))
-        print('无用的ip数：', len(useless_ip))
+        print('有用的ip数：', len(useful_proxies))
+        print('无用的ip数：', len(useless_proxies))
+
+        self.db_session.close()
 
 def single_request():
     '''
-    # 单 ip 测试
-    :return: 
+    单个 ip 测试
+    :return:
     '''
-    url = 'http://ip.chinaz.com/getip.aspx'
-    proxies = {'http': '39.135.24.11:80'}
+    url = 'http://news.163.com/latest/'
+    proxies = {'http': 'http://217.23.201.2:8080'}
+
+    # url = 'https://www.baidu.com/'
+    # proxies = {'https': 'https://119.27.177.169:80'}
     try:
-        resp = requests.get(url, proxies=proxies, timeout=1)
+        resp = requests.get(url, proxies=proxies, timeout=2)
         print(resp.status_code)
     except Exception as e:
         print(e)
@@ -119,4 +119,4 @@ def single_request():
 
 if __name__ == '__main__':
     DbIPCheck().del_ip()
-    # single_request()
+    #single_request()

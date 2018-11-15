@@ -75,9 +75,9 @@ ITEM_PIPELINES = {
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
 AUTOTHROTTLE_ENABLED = True
 # The initial download delay
-AUTOTHROTTLE_START_DELAY = 15
+AUTOTHROTTLE_START_DELAY = 20
 # The maximum download delay to be set in case of high latencies
-AUTOTHROTTLE_MAX_DELAY = 200
+AUTOTHROTTLE_MAX_DELAY = 65
 # The average number of requests Scrapy should be sending in parallel to
 # each remote server
 AUTOTHROTTLE_TARGET_CONCURRENCY = 0.5

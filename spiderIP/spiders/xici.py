@@ -28,12 +28,14 @@ class XiciSpider(scrapy.Spider):
         for i in range(1,len(tr_list)):  #
             item = SpideripItem()
             item['category'] = category
+
             ip = tr_list[i].xpath('td[2]/text()').extract_first()
             port = tr_list[i].xpath('td[3]/text()').extract_first()
-            item['ip'] = ip+':'+port
+            protocol = tr_list[i].xpath('td[6]/text()').extract_first().lower()
 
+            item['ip'] = protocol+'://'+ip+':'+port
             item['niming'] = tr_list[i].xpath('td[5]/text()').extract_first()
-            item['protocol'] = tr_list[i].xpath('td[6]/text()').extract_first().lower()
+            item['protocol'] = protocol
             item['speed'] = tr_list[i].xpath('td[7]/div/div/@style').extract_first()[-3:-1]
             item['connect_time'] = tr_list[i].xpath('td[8]/div/div/@style').extract_first()[-3:-1]
             item['alive_time'] = tr_list[i].xpath('td[9]/text()').extract_first()

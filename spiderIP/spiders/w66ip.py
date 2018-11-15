@@ -33,12 +33,14 @@ class W66Spider(scrapy.Spider):
         soup = BeautifulSoup(response.text, 'lxml')
         for br in soup.find_all('br'):
             ip = br.next.strip()
-
+            protocol = 'http'
             item = SpideripItem()
             item['category'] = category
-            item['ip'] = ip
+
+            item['protocol'] = protocol
+            item['ip'] = protocol+'://'+ip
+
             item['niming'] = '透明'
-            item['protocol'] = 'http'
             item['speed'] = ''
             item['connect_time'] = ''
             item['alive_time'] = ''

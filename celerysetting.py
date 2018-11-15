@@ -10,6 +10,7 @@ __mtime__ = '2018/11/12'
 
 from celery.schedules import crontab
 
+
 task_serializer = 'json'
 result_serializer = 'json'
 accept_content = ['json']
@@ -17,6 +18,7 @@ timezone = 'Asia/Shanghai'
 enable_utc = True
 result_expires = 60 * 60 * 1  # 存储过期时间
 
+worker_max_tasks_per_child = 50  # 50次任务后挂
 
 beat_schedule = {'everyday-9-14-18':
                      {'task': 'tasks.task_run_all',

@@ -41,10 +41,12 @@ class KuaiSpider(scrapy.Spider):
         for i in range(0,len(tr_list)):         # len(tr_list)
             item = SpideripItem()
             item['category'] = category
+
             ip = tr_list[i].xpath('td[1]/text()').extract_first()
             port = tr_list[i].xpath('td[2]/text()').extract_first()
-            item['ip'] = ip + ':' + port
-            item['protocol'] = tr_list[i].xpath('td[4]/text()').extract_first().lower()
+            protocol = tr_list[i].xpath('td[4]/text()').extract_first().lower()
+            item['ip'] = protocol +'://'+ip + ':' + port
+            item['protocol'] = protocol
 
             item['niming'] = tr_list[i].xpath('td[3]/text()').extract_first()
             item['speed'] = tr_list[i].xpath('td[6]/text()').extract_first()[-3:-1]

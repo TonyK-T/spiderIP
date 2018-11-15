@@ -21,6 +21,7 @@ Base = declarative_base()
 db_name = 'spider'
 
 HOST = 'localhost'
+# HOST = ''
 PASSWORD ='2456056533'
 engine = create_engine(
     'mysql+pymysql://root:{password}@{host}:3306/{db_name}?charset=utf8'.format(password=PASSWORD,host=HOST, db_name=db_name), echo=False)

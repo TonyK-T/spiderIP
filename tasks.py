@@ -10,9 +10,11 @@ __mtime__ = '2018/11/12'
 import sys
 
 # 必须改写这个路径才可定时
-sys.path.append('/home/stringk/scrapyproject/spiderIP/')
+sys.path.append('/home/stringk/scrapy_pro/spiderIP/')
 
-from celery import Celery
+from celery import Celery, platforms
+
+platforms.C_FORCE_ROOT = True
 
 from run import run_dbIPCheck, run_all
 

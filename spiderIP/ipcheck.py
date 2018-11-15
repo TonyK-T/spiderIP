@@ -15,30 +15,23 @@ __mtime__ = '2018/6/25'
 #
 # monkey.patch_all()
 
-import grequests        # grequests比较老的库了,gevent 使用一堆毛病,手动更新下gevent
+import grequests        # grequests比较老的库了,gevent  win10使用一堆毛病
 import asyncio
 import aiohttp
 from threading import Thread
 
 import functools
 import requests
+import random
+
+
+http_url = ['http://news.163.com/latest/', 'http://fanyi.youdao.com/','http://news.qq.com/','http://vdisk.weibo.com/','http://www.kugou.com/']
+https_url =['https://www.baidu.com/','https://fanyi.baidu.com/','https://news.baidu.com/','https://www.toutiao.com/','https://www.sogou.com/','https://www.xunlei.com/','https://www.csdn.net/']
 
 class IPCheck:
-    '''
-    爬取时校验ip
-    aiohttp 校验http(不支持https,当然都可以用 grequests 校验(http&&https),如果你不闲着蛋疼的话);
-    grequests 校验https;
-    queue 获取item, 两个线程同时执行异步并发校验, item写入new_queue;
-    '''
-
 
     def check_ip(self, queue, new_queue):
-        '''
-        返回  请求tasks任务 数组
-        aiohttp_tasks : aiohttp(http请求)tasks
-        grequests_tasks : grequests(https请求)tasks
 
-        '''
         aiohttp_tasks = []
         grequests_tasks = []
         semaphore = asyncio.Semaphore(300)
@@ -47,15 +40,15 @@ class IPCheck:
             item = queue.get(timeout=0.5)
             protocol = item['protocol']
             ip = item['ip']
-            proxy = {protocol: ip}  # {'http': '101.236.36.31:8866'}
+            proxy = {protocol:ip}  # {'http': 'http://101.236.36.31:8866'}
 
-            # task任务
+            # 区分http 和 https
             if 'http' in proxy.keys():
                 # 模式1: 最快,但是会超过最大并发数
-                # task = asyncio.ensure_future(self.aiohttp_check(proxy))
+                # task = asyncio.ensure_future(self.aiohttp_check(proxy,random.choice(http_url)))
 
                 # 模式2: 解决最大并发数问题，限制并发
-                task = asyncio.ensure_future(self.aiohttp_check2(proxy, semaphore))
+                task = asyncio.ensure_future(self.aiohttp_check2(proxy,random.choice(http_url),semaphore))
 
                 # 任务数组
                 task.add_done_callback(functools.partial(self.aiohttp_callback, new_queue=new_queue, item=item))
@@ -63,47 +56,45 @@ class IPCheck:
 
                 '''
                 # 模式3: 使用grequests框架,不使用asyncio,不用考虑最大并发数问题
-                url = 'http://ip.chinaz.com/getip.aspx'
-                grequests_tasks.append(grequests.get(url, proxies=proxy,callback=functools.partial(self.grequests_callback,new_queue=new_queue, item=item), timeout=1))   # proxies = {'http': '101.236.36.31:8866'}
+                
+                grequests_tasks.append(grequests.get(random.choice(http_url), proxies=proxy,callback=functools.partial(self.grequests_callback,new_queue=new_queue, item=item), timeout=1))
 
                 '''
             else:
-                url = 'https://www.baidu.com/'
-                grequests_tasks.append(grequests.get(url, proxies=proxy,
-                                                     callback=functools.partial(self.grequests_callback,
-                                                                                new_queue=new_queue, item=item),
-                                                     timeout=1))  # proxies = {'http': '101.236.36.31:8866'}
+                # grequests 校验https
+                grequests_tasks.append(grequests.get(random.choice(https_url), proxies=proxy,
+                                                     callback=functools.partial(self.grequests_callback,new_queue=new_queue, item=item), timeout=2))
+
+
 
         return aiohttp_tasks, grequests_tasks
 
-    async def aiohttp_check(self, proxy):
-        '''
-        aiohttp 请求: aiohttp 不支持 https 代理！
-        :param proxy: 
-        :return: 
-        '''
-        url = 'http://ip.chinaz.com/getip.aspx'
-        pro = 'http://' + proxy['http']
-        async with aiohttp.ClientSession() as session:
-            try:
-                async with session.get(url, proxy=pro, timeout=1.5) as resp:  # proxy =  http:// 218.60.8.98:3129
-                    return resp.status
-            except Exception as e:
-                return None
+    # async def aiohttp_check(self, proxy,url):
+    #     '''
+    #     aiohttp 请求: aiohttp 不支持 https 代理！
+    #     :param proxy:
+    #     :return:
+    #     '''
+    #     proxies = proxy['http']
+    #     async with aiohttp.ClientSession() as session:
+    #         try:
+    #             async with session.get(url, proxy=proxies, timeout=1.5) as resp:  # proxy =  http:// 218.60.8.98:3129
+    #                 return resp.status
+    #         except Exception as e:
+    #             return None
 
-    async def aiohttp_check2(self, proxy, semaphore):
+    async def aiohttp_check2(self, proxy,url, semaphore):
         '''
          解决: 超过最大连接数报 too many file descriptors in select()
         :param proxy: 
         :param semaphore: 
         :return: 
         '''
-        url = 'http://ip.chinaz.com/getip.aspx'
-        pro = 'http://' + proxy['http']
+        proxies = proxy['http']
         async with semaphore:
             async with aiohttp.ClientSession() as session:
                 try:
-                    async with session.get(url, proxy=pro, timeout=1.5) as resp:  # proxy =  http:// 218.60.8.98:3129
+                    async with session.get(url, proxy=proxies, timeout=2) as resp:  # aiohttp_proxy =  http:// 218.60.8.98:3129
                         return resp.status
                 except Exception as e:
 
@@ -139,8 +130,8 @@ class IPCheck:
         :return: 
         '''
         if grequests_tasks:
-            grequests.map(
-                grequests_tasks, )
+            grequests.map(grequests_tasks,)
+
 
     def grequests_callback(self, resp, new_queue, item, *args, **kwargs):
         '''
@@ -193,15 +184,14 @@ class IPcheckRedis(IPCheck):
             _item = eval(item.decode('utf-8'))
             protocol = _item['protocol']
             ip = _item['ip']
-            proxy = {protocol: ip}  # {'http': '101.236.36.31:8866'}
+            proxy = {protocol:ip}  # {'http': 'http://101.236.36.31:8866'}
 
-            # task任务
             if 'http' in proxy.keys():
                 # 模式1: 最快,但是会超过最大并发数
-                # task = asyncio.ensure_future(self.aiohttp_check(proxy))
+                # task = asyncio.ensure_future(self.aiohttp_check(proxy,random.choice(http_url)))
 
                 # 模式2: 解决最大并发数问题，限制并发
-                task = asyncio.ensure_future(self.aiohttp_check2(proxy, semaphore))
+                task = asyncio.ensure_future(self.aiohttp_check2(proxy, random.choice(http_url),semaphore))
 
                 # 任务数组
                 task.add_done_callback(functools.partial(self.aiohttp_callback, redis=redis,redis_key=redis_key2, item=_item))
@@ -209,16 +199,13 @@ class IPcheckRedis(IPCheck):
 
                 '''
                 # 模式3: 使用grequests框架,不使用asyncio,不用考虑最大并发数问题
-                url = 'http://ip.chinaz.com/getip.aspx'
-                grequests_tasks.append(grequests.get(url, proxies=proxy,callback=functools.partial(self.grequests_callback,new_queue=new_queue, item=item), timeout=1))   # proxies = {'http': '101.236.36.31:8866'}
+                grequests_tasks.append(grequests.get(random.choice(http_url), proxies=proxy,callback=functools.partial(self.grequests_callback,new_queue=new_queue, item=item), timeout=1))
 
                 '''
             else:
-                url = 'https://www.baidu.com/'
-                grequests_tasks.append(grequests.get(url, proxies=proxy,
+                grequests_tasks.append(grequests.get(random.choice(https_url), proxies=proxy,
                                                      callback=functools.partial(self.grequests_callback,
-                                                                                redis=redis,redis_key=redis_key2, item=_item),
-                                                     timeout=1))  # proxies = {'http': '101.236.36.31:8866'}
+                                                                                redis=redis,redis_key=redis_key2, item=_item),timeout=1.5))
 
         return aiohttp_tasks, grequests_tasks
 
@@ -271,8 +258,12 @@ def single_request():
     单个 ip 测试
     :return:
     '''
-    url = 'http://ip.chinaz.com/getip.aspx'
-    proxies = {'http': '118.190.95.35:9001'}
+    url = 'http://news.163.com/latest/'
+    proxies = {'http': 'http://117.21.182.14:80'}
+
+    # url = 'https://www.baidu.com/'
+    # proxies = {'https': 'https://119.27.177.169:80'}
+
     try:
         resp = requests.get(url, proxies=proxies, timeout=1)
         print(resp.status_code)

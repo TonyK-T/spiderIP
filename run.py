@@ -23,6 +23,7 @@ def run_all():
     from scrapy.utils.project import get_project_settings
     from spiderIP.spiders.kuaidaili import KuaiSpider
     from spiderIP.spiders.w66ip import W66Spider
+    from spiderIP.spiders.w89ip import W89Spider
     from spiderIP.spiders.xici import XiciSpider
     from twisted.internet import reactor
     from scrapy.utils.log import configure_logging
@@ -35,6 +36,7 @@ def run_all():
 
     runner.crawl(KuaiSpider)
     runner.crawl(W66Spider)
+    runner.crawl(W89Spider)
     runner.crawl(XiciSpider)
 
     d = runner.join()
