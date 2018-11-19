@@ -26,7 +26,7 @@ app.config_from_object('celerysetting')
 def task_run_all():
     # run_all()    # celery 直接调用 scrapy 会出错，异步
     import subprocess
-    subprocess.call('python run_spiders.py')   # python3 run_spiders.py
+    subprocess.Popen('python run_spiders.py')   # python3 run_spiders.py
 
 
 @app.task
