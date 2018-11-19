@@ -27,7 +27,7 @@ class KuaiSpider(scrapy.Spider):
     }
 
     def start_requests(self):
-        urls =['https://www.kuaidaili.com/free/intr/','https://www.kuaidaili.com/free/inha/']        # http,https
+        urls =['https://www.kuaidaili.com/free/intr/','https://www.kuaidaili.com/free/inha/']        # http
 
         for url in urls:
             for i in range(1,self.page_num):

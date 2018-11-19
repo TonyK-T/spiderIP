@@ -34,7 +34,7 @@ class IPCheck:
 
         aiohttp_tasks = []
         grequests_tasks = []
-        semaphore = asyncio.Semaphore(300)
+        semaphore = asyncio.Semaphore(200)
         while True:
             if queue.empty(): break
             item = queue.get(timeout=0.5)

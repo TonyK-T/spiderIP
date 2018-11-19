@@ -10,7 +10,7 @@ xici_spider = 'xici'
 class XiciSpider(scrapy.Spider):
     name = xici_spider
     allowed_domains = ['xicidaili.com']
-    page_num = 45                            # 页数, 越往后 ip西刺[验证时间]越老
+    page_num = 25                            # 页数, 越往后 ip西刺[验证时间]越老
 
     def start_requests(self):
         urls = ['http://www.xicidaili.com/wt/','http://www.xicidaili.com/wn/']    # http,https  # 'http://www.xicidaili.com/wn/'
