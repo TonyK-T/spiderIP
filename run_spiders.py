@@ -13,12 +13,9 @@ __mtime__ = '2018/6/18'
 def run_spider():
     from scrapy import cmdline
     from spiderIP.spiders.xici import xici_spider
-
     cmdline.execute('scrapy crawl {}'.format(xici_spider).split())
 
-
 def run_all():
-    print('-----------scrapy IP-----------------')
     from scrapy.crawler import CrawlerRunner
     from scrapy.utils.project import get_project_settings
     from spiderIP.spiders.kuaidaili import KuaiSpider
@@ -27,8 +24,6 @@ def run_all():
     from spiderIP.spiders.xici import XiciSpider
     from twisted.internet import reactor
     from scrapy.utils.log import configure_logging
-
-    print('-----------starting-----------------')
 
     configure_logging({'LOG_FORMAT': '%(levelname)s: %(message)s'})
     settings = get_project_settings()
@@ -43,11 +38,9 @@ def run_all():
     d.addBoth(lambda _: reactor.stop())
     reactor.run()
 
-
 def run_dbIPCheck():
-    print('-----------DbIPCheck-----------------')
     from spiderIP.dbIPCheck import DbIPCheck
-    print('-----------starting-----------------')
+
     db_ipcheck = DbIPCheck()
     db_ipcheck.del_ip()
 

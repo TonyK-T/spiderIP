@@ -10,7 +10,7 @@ import random
 from spiderIP.agents2 import AGENTS_ALL
 
 
-# 定义Agent代理
+
 class SpideripAgentMiddleware(object):
     def process_request(self,request,spider):
         agent = random.choice(AGENTS_ALL)

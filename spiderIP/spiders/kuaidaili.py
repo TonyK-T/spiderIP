@@ -27,7 +27,7 @@ class KuaiSpider(scrapy.Spider):
     }
 
     def start_requests(self):
-        urls =['https://www.kuaidaili.com/free/intr/','https://www.kuaidaili.com/free/inha/']        # http
+        urls =['https://www.kuaidaili.com/free/intr/','https://www.kuaidaili.com/free/inha/']        # http,https
 
         for url in urls:
             for i in range(1,self.page_num):
@@ -38,7 +38,7 @@ class KuaiSpider(scrapy.Spider):
         category = response.meta['cate']
         ip_list = response.xpath('//table[@class="table table-bordered table-striped"]/tbody')
         tr_list = ip_list.xpath('tr')
-        for i in range(0,len(tr_list)):         # len(tr_list)
+        for i in range(0,len(tr_list)):
             item = SpideripItem()
             item['category'] = category
 
@@ -55,3 +55,10 @@ class KuaiSpider(scrapy.Spider):
             item['prove_time'] = tr_list[i].xpath('td[7]/text()').extract_first()
             yield item
 
+
+if __name__ == '__main__':
+
+    process = CrawlerProcess({'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'})
+    # process = CrawlerProcess(get_project_settings())
+    process.crawl(KuaiSpider)
+    process.start()

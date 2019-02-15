@@ -20,9 +20,9 @@ Base = declarative_base()
 
 db_name = 'spider'
 
-HOST = 'localhost'
-# HOST = ''
-PASSWORD ='2456056533'
+# HOST = 'localhost'
+HOST = '10.0.0.164'
+PASSWORD ='123456'
 engine = create_engine(
     'mysql+pymysql://root:{password}@{host}:3306/{db_name}?charset=utf8'.format(password=PASSWORD,host=HOST, db_name=db_name), echo=False)
 
@@ -59,7 +59,7 @@ class BaseModel(Base):
                 raise e
 
         for k, v in attrs_datas.items():
-            if hasattr(obj, k) and k != 'id':
+            if hasattr(obj, k) and k != 'id':  # 非id属性
                 setattr(obj, k, str(v))
 
     @classmethod
@@ -79,6 +79,8 @@ class BaseModel(Base):
                 session.rollback()
 
 
+            # with auto_commit(session):
+            #     session.add(model)
 
     @staticmethod
     @contextmanager
@@ -92,13 +94,16 @@ class BaseModel(Base):
     @staticmethod
     def db_distinct(session, dbmodel, item, keywords):
         '''
-        Db 通过url去重,可选
+        Db 通过url去重
         '''
+
+        # sql = 'SELECT url from {db_name}.{table_name} WHERE url ="{keyword}" limit 1'.format(db_name=db_name,table_name=table_name,keyword=keyword)
+        # result = session.execute(sql).fetchall()
 
         result = session.query(dbmodel).filter_by(url=keywords).first()
         if result:
-            raise DropItem('丢弃DB已存在的item:\n')
-            # pass
+            raise DropItem('丢弃DB已存在的item:\n')  # DropItem 丢弃
+            # pass     # 在close_spider()方法里面调用 DropItem 会报一个异常： ERROR: Scraper close failure,  所以直接pass也行
         else:
             return item
 
@@ -120,11 +125,15 @@ class IPModel(BaseModel):
     @staticmethod
     def db_distinct(session, dbmodel, item, keywords):
         '''
-        重写 Db通过ip去重，可选
+        重写 Db通过ip去重
         '''
+
+        # sql = 'SELECT url from {db_name}.{table_name} WHERE url ="{keyword}" limit 1'.format(db_name=db_name,table_name=table_name,keyword=keyword)
+        # result = session.execute(sql).fetchall()
 
         result = session.query(dbmodel).filter_by(ip=keywords).first()
         if result:
-            pass     # 在close_spider()方法里面调用 DropItem 会报一个异常
+            #raise DropItem('丢弃DB已存在的item:\n')  # DropItem 丢弃
+            pass     # 在close_spider()方法里面调用 DropItem 会报一个异常： ERROR: Scraper close failure,  所以直接pass也行
         else:
             return item

@@ -12,7 +12,6 @@ __mtime__ = '2018/6/25'
 # grequests 内部做了处理
 # import gevent
 # from gevent import monkey
-#
 # monkey.patch_all()
 
 import grequests        # grequests比较老的库了,gevent  win10使用一堆毛病
@@ -31,41 +30,45 @@ https_url =['https://www.baidu.com/','https://fanyi.baidu.com/','https://news.ba
 class IPCheck:
 
     def check_ip(self, queue, new_queue):
+        '''
+        返回  请求tasks任务 数组
+        aiohttp_tasks : aiohttp(http请求)tasks
+        grequests_tasks : grequests(https请求)tasks
 
+        '''
         aiohttp_tasks = []
         grequests_tasks = []
-        semaphore = asyncio.Semaphore(200)
+        semaphore = asyncio.Semaphore(300)  # 限制并发量, 解决 asyncio 最大并发数报错
         while True:
             if queue.empty(): break
             item = queue.get(timeout=0.5)
             protocol = item['protocol']
             ip = item['ip']
-            proxy = {protocol:ip}  # {'http': 'http://101.236.36.31:8866'}
+            proxy = {protocol: ip}  # {'http': 'http://101.236.36.31:8866'}
 
-            # 区分http 和 https
+            # task任务  区分http 和 https
             if 'http' in proxy.keys():
                 # 模式1: 最快,但是会超过最大并发数
                 # task = asyncio.ensure_future(self.aiohttp_check(proxy,random.choice(http_url)))
 
                 # 模式2: 解决最大并发数问题，限制并发
-                task = asyncio.ensure_future(self.aiohttp_check2(proxy,random.choice(http_url),semaphore))
+                task = asyncio.ensure_future(self.aiohttp_check2(proxy, random.choice(http_url), semaphore))
 
-                # 任务数组
                 task.add_done_callback(functools.partial(self.aiohttp_callback, new_queue=new_queue, item=item))
                 aiohttp_tasks.append(task)
 
                 '''
-                # 模式3: 使用grequests框架,不使用asyncio,不用考虑最大并发数问题
+                # 模式3: 使用grequests框架,不使用asyncio
                 
                 grequests_tasks.append(grequests.get(random.choice(http_url), proxies=proxy,callback=functools.partial(self.grequests_callback,new_queue=new_queue, item=item), timeout=1))
 
                 '''
             else:
-                # grequests 校验https
+                # grequests 校验 https(aiohttp 不支持 https 代理)
                 grequests_tasks.append(grequests.get(random.choice(https_url), proxies=proxy,
-                                                     callback=functools.partial(self.grequests_callback,new_queue=new_queue, item=item), timeout=2))
-
-
+                                                     callback=functools.partial(self.grequests_callback,
+                                                                                new_queue=new_queue, item=item),
+                                                     timeout=1))
 
         return aiohttp_tasks, grequests_tasks
 
@@ -81,32 +84,25 @@ class IPCheck:
     #             async with session.get(url, proxy=proxies, timeout=1.5) as resp:  # proxy =  http:// 218.60.8.98:3129
     #                 return resp.status
     #         except Exception as e:
-    #             return None
+    #             return None       # aiohttp 请求异常也会触发回调函数，这里直接return,不需要回调
 
     async def aiohttp_check2(self, proxy,url, semaphore):
         '''
-         解决: 超过最大连接数报 too many file descriptors in select()
-        :param proxy: 
-        :param semaphore: 
-        :return: 
+         解决: 超过最大连接数报 too many file descriptors in select(), 通过asyncio.Semaphore(100) 限制并发数
         '''
         proxies = proxy['http']
         async with semaphore:
             async with aiohttp.ClientSession() as session:
                 try:
                     async with session.get(url, proxy=proxies, timeout=2) as resp:  # aiohttp_proxy =  http:// 218.60.8.98:3129
-                        return resp.status
+                        return resp.status  # 返回给回调函数处理
                 except Exception as e:
-
+                    # aiohttp 请求异常也会触发回调函数，这里直接return,不需要回调
                     return None
 
     def aiohttp_callback(self, future, new_queue, item):
         '''
-        aiohttp 请求回调函数
-        :param future: 
-        :param new_queue: 
-        :param item: 
-        :return: 
+        aiohttp 请求回调函数, 成功请求和错误请求都会此回调
         '''
         status = future.result()
         if status == 200:
@@ -116,9 +112,6 @@ class IPCheck:
     def run_aiohttp(self, loop, aiohttp_tasks):
         '''
          loop 执行 aiohttp
-        :param loop: 
-        :param aiohttp_tasks: 
-        :return: 
         '''
         if aiohttp_tasks:
             loop.run_until_complete(asyncio.wait(aiohttp_tasks))
@@ -126,22 +119,15 @@ class IPCheck:
     def run_grequests(self, grequests_tasks):
         '''
         执行 grequests
-        :param grequests_tasks: 
-        :return: 
         '''
         if grequests_tasks:
-            grequests.map(grequests_tasks,)
-
+            grequests.map(
+                grequests_tasks, )  # grequests.map()请求成功(有响应)才触发回调函数 ，eg:[None, <Response [200]>] 既<Response [200]>才会触发回调，None不会触发，是直接返回的(异常回调exception_handler=),  size(每秒请求并发数)
 
     def grequests_callback(self, resp, new_queue, item, *args, **kwargs):
         '''
-        grequests 回调函数
-        :param resp: 
-        :param new_queue: 
-        :param item: 
-        :param args: 
-        :param kwargs: 
-        :return: 
+        grequests 回调函数,只有请求成功的才会触发此回调,请求失败需指定 exception_handler= 回调
+
         '''
 
         if resp.status_code == 200:
@@ -151,21 +137,17 @@ class IPCheck:
     def run_ip_check(self, loop, queue, new_queue):
         '''
         返回线程组：开启两个线程,分别执行 aiohttp 请求(针对http协议) 和 grequests 请求(针对https协议)
-        :param loop: aiohttp 执行loop
-        :param queue: 爬虫爬到的item
-        :param new_queue: 校验ip后的item
-        :return:
         '''
         aiohttp_tasks, grequests_tasks = self.check_ip(queue, new_queue)
         thread1 = Thread(target=self.run_aiohttp, args=(loop, aiohttp_tasks))
         thread2 = Thread(target=self.run_grequests, args=(grequests_tasks,))
 
         for t in [thread1, thread2]:
-            t.setDaemon(True)
+            # t.setDaemon(True)
             t.start()
 
         for t in [thread1, thread2]:
-            t.join()
+            t.join()                # 等待子程序执行完
 
 
 
@@ -198,14 +180,14 @@ class IPcheckRedis(IPCheck):
                 aiohttp_tasks.append(task)
 
                 '''
-                # 模式3: 使用grequests框架,不使用asyncio,不用考虑最大并发数问题
+                # 模式3: 使用grequests框架,不使用asyncio,
                 grequests_tasks.append(grequests.get(random.choice(http_url), proxies=proxy,callback=functools.partial(self.grequests_callback,new_queue=new_queue, item=item), timeout=1))
 
                 '''
             else:
                 grequests_tasks.append(grequests.get(random.choice(https_url), proxies=proxy,
                                                      callback=functools.partial(self.grequests_callback,
-                                                                                redis=redis,redis_key=redis_key2, item=_item),timeout=1.5))
+                                                                                redis=redis,redis_key=redis_key2, item=_item),timeout=2))
 
         return aiohttp_tasks, grequests_tasks
 
@@ -245,12 +227,11 @@ class IPcheckRedis(IPCheck):
         thread4 = Thread(target=self.run_grequests, args=(grequests_tasks,))
 
         for t in [thread3,thread4]:
-            t.setDaemon(True)
+            # t.setDaemon(True)
             t.start()
 
         for t in [thread3,thread4]:
             t.join()
-
 
 
 def single_request():
@@ -263,13 +244,11 @@ def single_request():
 
     # url = 'https://www.baidu.com/'
     # proxies = {'https': 'https://119.27.177.169:80'}
-
     try:
         resp = requests.get(url, proxies=proxies, timeout=1)
         print(resp.status_code)
     except Exception as e:
         print(e)
-
 
 
 if __name__ == '__main__':

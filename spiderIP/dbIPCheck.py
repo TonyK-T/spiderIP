@@ -16,7 +16,6 @@ __mtime__ = '2018/6/21'
 # grequests 内部做了处理
 # import gevent
 # from gevent import monkey
-#
 # monkey.patch_all()
 
 import grequests
@@ -32,8 +31,8 @@ class DbIPCheck:
     '''
     校验数据库ip是否可用
     '''
-
     db_session = get_sqlsession(engine)
+
 
     def get_ip(self):
 
@@ -45,15 +44,14 @@ class DbIPCheck:
         useful = []
         useless = []  # 无用proxies
         all_proxies = [x for x in self.get_ip()]  # [('http', 'http://202.101.13.68:80'), ]
-
         for pro in all_proxies:
             proxy = {pro[0]:pro[1]}
             if 'http' in proxy.keys():
                 url = random.choice(http_url)
             else:
                 url = random.choice(https_url)
-
-            grequests_tasks.append(grequests.get(url, proxies=proxy,callback=functools.partial(self.grequests_callback, proxies=proxy, useful=useful), timeout=1.5))
+            grequests_tasks.append(grequests.get(url, proxies=proxy,
+                                                 callback=functools.partial(self.grequests_callback, proxies=proxy, useful=useful), timeout=1.5))
 
         resp = grequests.map(grequests_tasks, exception_handler=functools.partial(self.exception_handler,
                                                                                   useless=useless))
@@ -63,10 +61,6 @@ class DbIPCheck:
     def exception_handler(self, request, exception, useless):
         '''
         异常请求回调函数
-        :param request: 
-        :param exception: 
-        :param useless: 
-        :return: 
         '''
         proxies = request.__dict__['kwargs']['proxies']
         print('exception_handler:无用ip--', proxies)
@@ -74,13 +68,7 @@ class DbIPCheck:
 
     def grequests_callback(self, resp, proxies, useful, *args, **kwargs):
         '''
-        请求成功的回调函数,
-        :param resp: 
-        :param proxies: 
-        :param useful: 
-        :param args: 
-        :param kwargs: 
-        :return: 
+        请求成功的回调函数, 请求失败的proxies 并不触发此回调,直接返回None，
         '''
         if resp.status_code == 200:
             print('grequests_callback:有用IP--', proxies)
@@ -106,12 +94,12 @@ def single_request():
     :return:
     '''
     url = 'http://news.163.com/latest/'
-    proxies = {'http': 'http://217.23.201.2:8080'}
+    proxies = {'http': 'http://5.16.11.190:8080'}
 
     # url = 'https://www.baidu.com/'
     # proxies = {'https': 'https://119.27.177.169:80'}
     try:
-        resp = requests.get(url, proxies=proxies, timeout=2)
+        resp = requests.get(url, proxies=proxies, timeout=1)
         print(resp.status_code)
     except Exception as e:
         print(e)
@@ -119,4 +107,4 @@ def single_request():
 
 if __name__ == '__main__':
     DbIPCheck().del_ip()
-    #single_request()
+    # single_request()

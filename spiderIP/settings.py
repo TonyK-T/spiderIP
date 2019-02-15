@@ -54,7 +54,7 @@ COOKIES_ENABLED = False
 # See https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
    'spiderIP.middlewares.SpideripAgentMiddleware': 543,
-   'scrapy.downloadermiddlewares.retry.RetryMiddleware':100,
+   'scrapy.downloadermiddlewares.retry.RetryMiddleware':100,      # 重复次数
    # 'spiderIP.middlewares.SpideripDownloaderMiddleware': 543,
 }
 
@@ -75,9 +75,9 @@ ITEM_PIPELINES = {
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
 AUTOTHROTTLE_ENABLED = True
 # The initial download delay
-AUTOTHROTTLE_START_DELAY = 20
+AUTOTHROTTLE_START_DELAY = 15
 # The maximum download delay to be set in case of high latencies
-AUTOTHROTTLE_MAX_DELAY = 80
+AUTOTHROTTLE_MAX_DELAY = 45
 # The average number of requests Scrapy should be sending in parallel to
 # each remote server
 AUTOTHROTTLE_TARGET_CONCURRENCY = 0.5
@@ -95,7 +95,7 @@ AUTOTHROTTLE_DEBUG = False
 
 
 RETRY_ENABLED = True
-RETRY_TIMES = 1
+RETRY_TIMES = 1     # default = 2
 
 
 IP_REDIS = '127.0.0.1'

@@ -39,6 +39,7 @@ class BaseSpiderPipeline(object):
         elif spider.name == 'w66':
             # 无筛选
             self.queue.put(item)
+
         elif spider.name =='w89':
             # 无筛选
             self.queue.put(item)
@@ -52,19 +53,19 @@ class BaseSpiderPipeline(object):
         IPCheck().run_ip_check(self.loop, self.queue, self.new_queue)
 
         while not self.new_queue.empty():
-            item = self.new_queue.get(timeout=5)
+            item = self.new_queue.get(timeout=5)    # 避免提前退出
             _item = IPModel.db_distinct(self.session, IPModel, item, item['ip'])
             IPModel.save_mode(self.session, IPModel(), _item)
 
-
+        # 关闭db连接
         self.session.close()
-        # self.loop.close() # loop无需手动关闭,见源码: finally: _run_until_complete_cb
+        # self.loop.close() # loop可无需手动关闭,见源码: finally: _run_until_complete_cb
 
 
 
 class RedisPipline:
     '''
-    另一种实现：通过 redis 代替 Queue, ip校验失败嘤嘤嘤
+    另一种实现：通过 redis 代替 Queue, ip校验失败
     '''
     redis = Redis(host=IP_REDIS)
     redis_key ='ip:requests'
