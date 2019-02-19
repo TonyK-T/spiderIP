@@ -5,10 +5,10 @@
 
 #### 软件架构
 软件架构说明
-  Scrapy 爬取数据
-  aiohttp|grequests 异步请求校验ip
-  sqlalchemy 入库
-  celery 定时
+1、Scrapy 爬取数据
+2、aiohttp|grequests 异步请求校验ip
+3、sqlalchemy 入库
+4、celery 定时
 
 
 #### 安装教程
