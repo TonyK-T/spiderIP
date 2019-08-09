@@ -9,11 +9,13 @@ __mtime__ = '2018/6/18'
 佛祖保佑  永无bug!
 
 """
+from spiders.xila import Xila, xila_spider
+
 
 def run_spider():
     from scrapy import cmdline
-    from spiderIP.spiders.xici import xici_spider
-    cmdline.execute('scrapy crawl {}'.format(xici_spider).split())
+    cmdline.execute('scrapy crawl {}'.format(xila_spider).split())
+
 
 def run_all():
     from scrapy.crawler import CrawlerRunner
@@ -33,10 +35,12 @@ def run_all():
     runner.crawl(W66Spider)
     runner.crawl(W89Spider)
     runner.crawl(XiciSpider)
+    runner.crawl(Xila)
 
     d = runner.join()
     d.addBoth(lambda _: reactor.stop())
     reactor.run()
+
 
 def run_dbIPCheck():
     from spiderIP.dbIPCheck import DbIPCheck

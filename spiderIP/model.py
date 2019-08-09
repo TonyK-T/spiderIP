@@ -21,10 +21,13 @@ Base = declarative_base()
 db_name = 'spider'
 
 # HOST = 'localhost'
-HOST = '10.0.0.164'
-PASSWORD ='123456'
+HOST = '200.200.200.7'
+PORT = '3307'
+PASSWORD = '123456'
 engine = create_engine(
-    'mysql+pymysql://root:{password}@{host}:3306/{db_name}?charset=utf8'.format(password=PASSWORD,host=HOST, db_name=db_name), echo=False)
+    'mysql+pymysql://root:{password}@{host}:{port}/{db_name}?charset=utf8'.format(password=PASSWORD, host=HOST,
+                                                                                  port=PORT, db_name=db_name),
+    echo=False)
 
 table_ips = 'ips'
 
@@ -33,6 +36,7 @@ def create_newtable(engine):
     try:
         Base.metadata.create_all(engine)
     except Exception as e:
+        print(e)
         raise ('---create_new_table err----')
 
 
@@ -42,8 +46,8 @@ def get_sqlsession(engine):
         session = Session()
         return session
     except Exception as e:
+        print(e)
         raise ('--------------engine err--------------')
-
 
 
 class BaseModel(Base):
@@ -65,7 +69,7 @@ class BaseModel(Base):
     @classmethod
     def save_mode(cls, session, model, item):
         if item:
-            if hasattr(item,'__dict__'):
+            if hasattr(item, '__dict__'):
                 item_data = item.__dict__['_values']
             else:
                 item_data = item
@@ -79,8 +83,8 @@ class BaseModel(Base):
                 session.rollback()
 
 
-            # with auto_commit(session):
-            #     session.add(model)
+                # with auto_commit(session):
+                #     session.add(model)
 
     @staticmethod
     @contextmanager
@@ -108,8 +112,6 @@ class BaseModel(Base):
             return item
 
 
-
-
 class IPModel(BaseModel):
     __tablename__ = table_ips
 
@@ -133,7 +135,7 @@ class IPModel(BaseModel):
 
         result = session.query(dbmodel).filter_by(ip=keywords).first()
         if result:
-            #raise DropItem('丢弃DB已存在的item:\n')  # DropItem 丢弃
-            pass     # 在close_spider()方法里面调用 DropItem 会报一个异常： ERROR: Scraper close failure,  所以直接pass也行
+            # raise DropItem('丢弃DB已存在的item:\n')  # DropItem 丢弃
+            pass  # 在close_spider()方法里面调用 DropItem 会报一个异常： ERROR: Scraper close failure,  所以直接pass也行
         else:
             return item

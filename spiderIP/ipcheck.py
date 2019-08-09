@@ -147,91 +147,91 @@ class IPCheck:
             t.start()
 
         for t in [thread1, thread2]:
-            t.join()                # 等待子程序执行完
+            t.join()                # 等待子程序执行完,避免队列为空退出
 
 
 
-class IPcheckRedis(IPCheck):
-    '''
-    另一种实现校验 失败 ：通过redis, 在 redis sadd()操作时候 报  greenlet.error: cannot switch to a different thread, 两个线程同时添加redis导致，maybe
-    '''
-
-    def check_ip(self, redis,redis_key,redis_key2):
-        aiohttp_tasks = []
-        grequests_tasks = []
-        semaphore = asyncio.Semaphore(300)
-        while True:
-            item = redis.spop(redis_key)
-            if not item: break
-            _item = eval(item.decode('utf-8'))
-            protocol = _item['protocol']
-            ip = _item['ip']
-            proxy = {protocol:ip}  # {'http': 'http://101.236.36.31:8866'}
-
-            if 'http' in proxy.keys():
-                # 模式1: 最快,但是会超过最大并发数
-                # task = asyncio.ensure_future(self.aiohttp_check(proxy,random.choice(http_url)))
-
-                # 模式2: 解决最大并发数问题，限制并发
-                task = asyncio.ensure_future(self.aiohttp_check2(proxy, random.choice(http_url),semaphore))
-
-                # 任务数组
-                task.add_done_callback(functools.partial(self.aiohttp_callback, redis=redis,redis_key=redis_key2, item=_item))
-                aiohttp_tasks.append(task)
-
-                '''
-                # 模式3: 使用grequests框架,不使用asyncio,
-                grequests_tasks.append(grequests.get(random.choice(http_url), proxies=proxy,callback=functools.partial(self.grequests_callback,new_queue=new_queue, item=item), timeout=1))
-
-                '''
-            else:
-                grequests_tasks.append(grequests.get(random.choice(https_url), proxies=proxy,
-                                                     callback=functools.partial(self.grequests_callback,
-                                                                                redis=redis,redis_key=redis_key2, item=_item),timeout=2))
-
-        return aiohttp_tasks, grequests_tasks
-
-
-    def aiohttp_callback(self, future, redis,redis_key, item):
-        '''
-        aiohttp 请求回调函数
-
-        '''
-        status = future.result()
-        if status == 200:
-            print('******************************可用的ip:', item)
-            redis.sadd(redis_key,item)
-            # redis.lpush(redis_key,item)
-
-
-
-    def grequests_callback(self, resp, redis,redis_key, item, *args, **kwargs):
-        '''
-        grequests 回调函数
-
-        '''
-
-        if resp.status_code == 200:
-            print('******************************可用的ip:', item)
-            redis.sadd(redis_key, item)
-            # redis.lpush(redis_key, item)
-
-
-
-    def run_ip_check(self,loop,redis,redis_key,redis_key2):
-        '''
-        返回线程组：开启两个线程,分别执行 aiohttp 请求(针对http协议) 和 grequests 请求(针对https协议)
-        '''
-        aiohttp_tasks, grequests_tasks = self.check_ip(redis, redis_key,redis_key2)
-        thread3 = Thread(target=self.run_aiohttp, args=(loop, aiohttp_tasks))
-        thread4 = Thread(target=self.run_grequests, args=(grequests_tasks,))
-
-        for t in [thread3,thread4]:
-            # t.setDaemon(True)
-            t.start()
-
-        for t in [thread3,thread4]:
-            t.join()
+# class IPcheckRedis(IPCheck):
+#     '''
+#     另一种实现校验 失败 ：通过redis, 在 redis sadd()操作时候 报  greenlet.error: cannot switch to a different thread, 两个线程同时添加redis导致，maybe
+#     '''
+#
+#     def check_ip(self, redis,redis_key,redis_key2):
+#         aiohttp_tasks = []
+#         grequests_tasks = []
+#         semaphore = asyncio.Semaphore(300)
+#         while True:
+#             item = redis.spop(redis_key)
+#             if not item: break
+#             _item = eval(item.decode('utf-8'))
+#             protocol = _item['protocol']
+#             ip = _item['ip']
+#             proxy = {protocol:ip}  # {'http': 'http://101.236.36.31:8866'}
+#
+#             if 'http' in proxy.keys():
+#                 # 模式1: 最快,但是会超过最大并发数
+#                 # task = asyncio.ensure_future(self.aiohttp_check(proxy,random.choice(http_url)))
+#
+#                 # 模式2: 解决最大并发数问题，限制并发
+#                 task = asyncio.ensure_future(self.aiohttp_check2(proxy, random.choice(http_url),semaphore))
+#
+#                 # 任务数组
+#                 task.add_done_callback(functools.partial(self.aiohttp_callback, redis=redis,redis_key=redis_key2, item=_item))
+#                 aiohttp_tasks.append(task)
+#
+#                 '''
+#                 # 模式3: 使用grequests框架,不使用asyncio,
+#                 grequests_tasks.append(grequests.get(random.choice(http_url), proxies=proxy,callback=functools.partial(self.grequests_callback,new_queue=new_queue, item=item), timeout=1))
+#
+#                 '''
+#             else:
+#                 grequests_tasks.append(grequests.get(random.choice(https_url), proxies=proxy,
+#                                                      callback=functools.partial(self.grequests_callback,
+#                                                                                 redis=redis,redis_key=redis_key2, item=_item),timeout=2))
+#
+#         return aiohttp_tasks, grequests_tasks
+#
+#
+#     def aiohttp_callback(self, future, redis,redis_key, item):
+#         '''
+#         aiohttp 请求回调函数
+#
+#         '''
+#         status = future.result()
+#         if status == 200:
+#             print('******************************可用的ip:', item)
+#             redis.sadd(redis_key,item)
+#             # redis.lpush(redis_key,item)
+#
+#
+#
+#     def grequests_callback(self, resp, redis,redis_key, item, *args, **kwargs):
+#         '''
+#         grequests 回调函数
+#
+#         '''
+#
+#         if resp.status_code == 200:
+#             print('******************************可用的ip:', item)
+#             redis.sadd(redis_key, item)
+#             # redis.lpush(redis_key, item)
+#
+#
+#
+#     def run_ip_check(self,loop,redis,redis_key,redis_key2):
+#         '''
+#         返回线程组：开启两个线程,分别执行 aiohttp 请求(针对http协议) 和 grequests 请求(针对https协议)
+#         '''
+#         aiohttp_tasks, grequests_tasks = self.check_ip(redis, redis_key,redis_key2)
+#         thread3 = Thread(target=self.run_aiohttp, args=(loop, aiohttp_tasks))
+#         thread4 = Thread(target=self.run_grequests, args=(grequests_tasks,))
+#
+#         for t in [thread3,thread4]:
+#             # t.setDaemon(True)
+#             t.start()
+#
+#         for t in [thread3,thread4]:
+#             t.join()
 
 
 def single_request():
