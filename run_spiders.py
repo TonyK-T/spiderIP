@@ -9,7 +9,7 @@ __mtime__ = '2018/6/18'
 佛祖保佑  永无bug!
 
 """
-from spiders.xila import Xila, xila_spider
+from spiderIP.spiders.xila import Xila, xila_spider
 
 
 def run_spider():
