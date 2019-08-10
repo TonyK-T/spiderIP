@@ -93,6 +93,7 @@ class BaseModel(Base):
             yield
             session.commit()
         except Exception as e:
+            print(e)
             session.rollback()
 
     @staticmethod

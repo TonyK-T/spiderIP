@@ -10,9 +10,6 @@ __mtime__ = '2018/6/21'
 
 """
 
-
-
-
 # grequests 内部做了处理
 # import gevent
 # from gevent import monkey
@@ -25,7 +22,8 @@ import requests
 import random
 
 from spiderIP.model import engine, get_sqlsession, IPModel
-from spiderIP.ipcheck import http_url,https_url
+from spiderIP.ipcheck import http_url, https_url
+
 
 class DbIPCheck:
     '''
@@ -33,10 +31,13 @@ class DbIPCheck:
     '''
     db_session = get_sqlsession(engine)
 
-
     def get_ip(self):
-
-        result = self.db_session.query(IPModel.protocol, IPModel.ip).all()
+        result = []
+        try:
+            result = self.db_session.query(IPModel.protocol, IPModel.ip).all()
+        except Exception as e:
+            print(e)
+            self.db_session.rollback()
         return result
 
     def check_ip(self):
@@ -45,16 +46,17 @@ class DbIPCheck:
         useless = []  # 无用proxies
         all_proxies = [x for x in self.get_ip()]  # [('http', 'http://202.101.13.68:80'), ]
         for pro in all_proxies:
-            proxy = {pro[0]:pro[1]}
+            proxy = {pro[0]: pro[1]}
             if 'http' in proxy.keys():
                 url = random.choice(http_url)
             else:
                 url = random.choice(https_url)
             grequests_tasks.append(grequests.get(url, proxies=proxy,
-                                                 callback=functools.partial(self.grequests_callback, proxies=proxy, useful=useful), timeout=1.5))
+                                                 callback=functools.partial(self.grequests_callback, proxies=proxy,
+                                                                            useful=useful), timeout=1.5))
 
-        resp = grequests.map(grequests_tasks, exception_handler=functools.partial(self.exception_handler,
-                                                                                  useless=useless))
+        resp = grequests.map(grequests_tasks,
+                             exception_handler=functools.partial(self.exception_handler, useless=useless))
         if resp:
             return useful, useless
 
@@ -87,6 +89,7 @@ class DbIPCheck:
         print('无用的ip数：', len(useless_proxies))
 
         self.db_session.close()
+
 
 def single_request():
     '''

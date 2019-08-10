@@ -51,5 +51,5 @@ def run_dbIPCheck():
 
 if __name__ == '__main__':
     # run_spider()
-    run_all()
-    # run_dbIPCheck()
+    # run_all()
+    run_dbIPCheck()

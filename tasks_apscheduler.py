@@ -32,7 +32,7 @@ def task_run_all():
     subprocess.Popen(cmd, shell=True)
 
 
-@scheduler.scheduled_job(trigger='cron', id='task_run_dbIPCheck', minute='*/10')
+@scheduler.scheduled_job(trigger='cron', id='task_run_dbIPCheck', minute='*/15')
 def task_run_dbIPCheck():
     run_dbIPCheck()  # win 下不会执行函数，因为 grequests 库gevent导致，Linux正常
 
