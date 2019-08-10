@@ -81,9 +81,11 @@ class DbIPCheck:
         with IPModel.auto_commit(self.db_session):
             for i in useless_proxies:  # i == {'http': 'http://61.138.33.20:808'} | https
                 print('无用ip删除:', i)
-                _ip = [x for x in i.values()]
-                ip_model = self.db_session.query(IPModel).filter_by(ip=_ip[0]).all()
-                [self.db_session.delete(ip) for ip in ip_model]
+
+                _ip = [x for x in i.values() if x]
+                if _ip:
+                    ip_model = self.db_session.query(IPModel).filter_by(ip=_ip[0]).all()
+                    [self.db_session.delete(ip) for ip in ip_model]
 
         print('有用的ip数：', len(useful_proxies))
         print('无用的ip数：', len(useless_proxies))
