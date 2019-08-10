@@ -42,14 +42,9 @@ def run_all():
     reactor.run()
 
 
-def run_dbIPCheck():
-    from spiderIP.dbIPCheck import DbIPCheck
 
-    db_ipcheck = DbIPCheck()
-    db_ipcheck.del_ip()
 
 
 if __name__ == '__main__':
     # run_spider()
-    # run_all()
-    run_dbIPCheck()
+    run_all()

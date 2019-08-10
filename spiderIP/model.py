@@ -11,6 +11,8 @@ __mtime__ = '2018/6/18'
 """
 import json
 from contextlib import contextmanager
+
+from scrapy import Item
 from scrapy.exceptions import DropItem
 from sqlalchemy import create_engine, Column, String, Integer
 from sqlalchemy.orm import sessionmaker
@@ -69,10 +71,18 @@ class BaseModel(Base):
     @classmethod
     def save_mode(cls, session, model, item):
         if item:
-            if hasattr(item, '__dict__'):
-                item_data = item.__dict__['_values']
-            else:
+            if isinstance(item, Item):
+
+                item_data = dict(item)
+                # print(item_data)
+            elif isinstance(item, dict):
                 item_data = item
+            else:
+                try:
+                    item_data = json.loads(item)
+                except:
+                    raise ('******************** item must dict ')
+
             cls.set_attrs(item_data, model)
 
             try:

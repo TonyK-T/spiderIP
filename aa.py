@@ -14,7 +14,7 @@ def __grequests():
     url ='https://www.baidu.com/'
     # url = 'http://news.163.com/latest/'
 
-    # http代理只能校验http_url ,否则会使用本地ip(https同理,须对应)
+    # http代理只能校验http_url ,否则会使用本地ip(https同理,须对应,除非该ip代理既支持http又支持https)
     # proxies ={
     #     'http':'http://117.21.182.14:89'    # {'http':'117.21.182.14:80'} 这种也行 ==>  grequests
     # }

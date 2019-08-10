@@ -12,7 +12,7 @@
 # from celery import Celery, platforms
 # from run_spiders import run_dbIPCheck, run_all
 #
-# ''' celery 定时任务-还需借助redis '''
+# ''' celery 定时任务-还需借助redis,不是很方便 '''
 #
 #
 # # 须改写这个路径

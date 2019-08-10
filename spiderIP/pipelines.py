@@ -27,7 +27,7 @@ class BaseSpiderPipeline(object):
         self.loop = asyncio.get_event_loop()
 
     def process_item(self, item, spider):
-        # print(item)
+        # print('*********入队：', item)
         if spider.name == 'xici':
             speed = item['speed']
             connect_time = item['connect_time']

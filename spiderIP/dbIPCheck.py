@@ -21,6 +21,8 @@ import functools
 import requests
 import random
 
+import time
+
 from spiderIP.model import engine, get_sqlsession, IPModel
 from spiderIP.ipcheck import http_url, https_url
 
@@ -85,7 +87,9 @@ class DbIPCheck:
                 _ip = [x for x in i.values() if x]
                 if _ip:
                     ip_model = self.db_session.query(IPModel).filter_by(ip=_ip[0]).all()
-                    [self.db_session.delete(ip) for ip in ip_model]
+                    if ip_model:
+                        for j in ip_model:
+                            self.db_session.delete(j)
 
         print('有用的ip数：', len(useful_proxies))
         print('无用的ip数：', len(useless_proxies))
@@ -111,5 +115,6 @@ def single_request():
 
 
 if __name__ == '__main__':
+
     DbIPCheck().del_ip()
     # single_request()

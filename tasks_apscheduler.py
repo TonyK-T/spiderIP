@@ -13,9 +13,13 @@ from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 from apscheduler.schedulers.blocking import BlockingScheduler
 import subprocess
 
-from run_spiders import run_dbIPCheck
-
-'''apscheduler 定时'''
+'''apscheduler 定时
+   
+   注：apscheduler or celery 定时执行 异步库[aiohttp,scrapy,grequests] 会出现线程间异常，
+       需借助 subprocess 拉起一个新进程来执行
+   
+    
+'''
 
 scheduler = BlockingScheduler()
 
@@ -25,16 +29,19 @@ py_path = str(os.path.join(curre_path, 'run_spiders.py'))
 print(py_path)
 
 
-@scheduler.scheduled_job(trigger='cron', id='task_run_all', minute='*/30')
+@scheduler.scheduled_job(trigger='cron', id='task_run_all', minute='*/40')
 def task_run_all():
     cmd = 'python {}'.format(py_path)
-    print('--------------', cmd)
+    print('----ip爬取 ----------', cmd)
     subprocess.Popen(cmd, shell=True)
 
 
-@scheduler.scheduled_job(trigger='cron', id='task_run_dbIPCheck', minute='*/15')
+@scheduler.scheduled_job(trigger='cron', id='task_run_dbIPCheck', minute='*/10')
 def task_run_dbIPCheck():
-    run_dbIPCheck()  # win 下不会执行函数，因为 grequests 库gevent导致，Linux正常
+    '''win 下不会执行函数，因为 grequests 库gevent导致，Linux正常'''
+    cmd = 'python {}'.format(str(os.path.join(curre_path, 'run_dbCheck.py')))
+    print('-----ip校验--------', cmd)
+    subprocess.Popen(cmd, shell=True)
 
 
 # 监听
@@ -48,3 +55,11 @@ def listen_task(event):
 scheduler.add_listener(listen_task, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
 
 scheduler.start()
+
+'''
+
+step-1： 修改 model.py  mysql连接
+setp-2:  nohup python -u tasks_apscheduler.py &
+
+
+'''
