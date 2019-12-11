@@ -12,6 +12,11 @@ __mtime__ = '2019/8/10'
 
 from spiderIP.dbIPCheck import DbIPCheck
 
-if __name__ == '__main__':
+
+def run_dbIpCheck():
     db_ipcheck = DbIPCheck()
     db_ipcheck.del_ip()
+
+
+if __name__ == '__main__':
+    run_dbIpCheck()
