@@ -20,7 +20,7 @@ xila_spider = 'xila'
 
 class Xila(scrapy.Spider):
     name = xila_spider
-    page_count = 50
+    page_count = 20 # 50
     ursl = ['http://www.xiladaili.com/http/{page}', 'http://www.xiladaili.com/gaoni/{page}',
             'http://www.xiladaili.com/https/{page}']
 

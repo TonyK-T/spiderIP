@@ -20,7 +20,7 @@ kuaidaili_spider = 'kuaidaili'
 class KuaiSpider(scrapy.Spider):
     name = kuaidaili_spider
     allowed_domains = ['kuaidaili.com']
-    page_num = 3                             # 辣鸡,一页都懒得爬
+    page_num = 2                             # 辣鸡,一页都懒得爬
 
     custom_settings = {
 

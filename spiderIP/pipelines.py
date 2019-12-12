@@ -8,14 +8,9 @@
 
 from queue import Queue
 
-from redis import Redis
 from scrapy.exceptions import DropItem
-import asyncio
 from spiderIP.model import IPModel, create_newtable, engine, get_sqlsession
-from spiderIP.ipcheck import IPCheck  # IPcheckRedis
-
-
-# from spiderIP.settings import IP_REDIS
+from spiderIP.ipcheck import IPCheck
 
 
 class BaseSpiderPipeline(object):
@@ -24,7 +19,6 @@ class BaseSpiderPipeline(object):
         self.new_queue = Queue()
         create_newtable(engine)
         self.session = get_sqlsession(engine)
-        self.loop = asyncio.get_event_loop()
 
     def process_item(self, item, spider):
         # print('*********入队：', item)
@@ -53,11 +47,8 @@ class BaseSpiderPipeline(object):
         return item
 
     def close_spider(self, spider):
-        '''
-        三个spider,三个IPCheck()对象,六个线程,N个协程
-        '''
-
-        IPCheck().run_ip_check(self.loop, self.queue, self.new_queue)
+        
+        IPCheck().run_ip_check(self.queue, self.new_queue)
 
         while not self.new_queue.empty():
             item = self.new_queue.get(timeout=2)
@@ -66,34 +57,3 @@ class BaseSpiderPipeline(object):
 
         # 关闭db连接
         self.session.close()
-        # self.loop.close() # loop可无需手动关闭,见源码: finally: _run_until_complete_cb
-
-# class RedisPipline:
-#     '''
-#     另一种实现：通过 redis 代替 Queue, ip校验失败
-#     '''
-#     redis = Redis(host=IP_REDIS)
-#     redis_key ='ip:requests'
-#     redis_key2 = 'ip:save'
-#
-#     def __init__(self):
-#         create_newtable(engine)
-#         self.session = get_sqlsession(engine)
-#         self.loop = asyncio.get_event_loop()
-#
-#     def process_item(self, item, spider):
-#         self.redis.sadd(self.redis_key,item)
-#         return item
-#
-#     def close_spider(self,spider):
-#         IPcheckRedis().run_ip_check(self.loop, self.redis, self.redis_key,self.redis_key2)
-#         while True:
-#
-#             item = self.redis.spop(self.redis_key2)
-#             if not item:break
-#             _item = eval(item.decode('utf-8'))
-#             _item = IPModel.db_distinct(self.session, IPModel, _item, _item['ip'])
-#
-#             IPModel.save_mode(self.session, IPModel(), _item)
-#
-#         self.session.close()

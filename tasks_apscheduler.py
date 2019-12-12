@@ -18,14 +18,20 @@ from run_spiders import run_all
 scheduler = BlockingScheduler()
 
 
-@scheduler.scheduled_job(trigger='cron', id='task_run_all', minute='*/40')
+@scheduler.scheduled_job(trigger='date', id='task_run_all', run_date='2019-12-12 16:30:01')
+# @scheduler.scheduled_job(trigger='cron', id='task_run_all', minute='*/40')
 def task_run_all():
-    Process(target=run_all).start()
+    pro = Process(target=run_all)
+    pro.start()
+    pro.join()
+    pro.terminate()
 
 
-@scheduler.scheduled_job(trigger='cron', id='task_run_dbIPCheck', minute='*/10')
+@scheduler.scheduled_job(trigger='date', id='task_run_dbIPCheck', run_date='2019-12-11 17:06:01')
+# @scheduler.scheduled_job(trigger='cron', id='task_run_dbIPCheck', minute='*/10')
 def task_run_dbIPCheck():
-    Process(target=run_dbIpCheck).start()
+    pass
+    # Process(target=run_dbIpCheck).start()
 
 
 # 监听

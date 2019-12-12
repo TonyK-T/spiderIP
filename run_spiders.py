@@ -32,9 +32,9 @@ def run_all():
     runner = CrawlerRunner(settings)
 
     runner.crawl(KuaiSpider)
-    runner.crawl(W66Spider)
-    runner.crawl(W89Spider)
-    runner.crawl(XiciSpider)
+    # runner.crawl(W66Spider)
+    # runner.crawl(W89Spider)
+    # runner.crawl(XiciSpider)
     runner.crawl(Xila)
 
     d = runner.join()
